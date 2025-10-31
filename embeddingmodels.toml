@@ -1,0 +1,77 @@
+# Embedding Models Configuration
+# This file configures embedding models for the standalone Embedding Server
+
+# Global settings
+[global]
+# Default model to use when none is specified
+default_model = "All MiniLM L6 v2"
+# Maximum batch size for processing
+max_batch_size = 32
+# Cache settings
+cache_enabled = true
+cache_size_mb = 512
+# Timeout settings (in seconds)
+init_timeout = 300
+inference_timeout = 60
+
+# Model configurations
+[models.all-MiniLM-L6-v2]
+# Model metadata
+name = "All MiniLM L6 v2"
+description = "Sentence-BERT model for sentence embeddings"
+version = "1.0.0"
+enabled = true
+
+# Paths (relative to EmbeddingServer directory or absolute paths)
+model_path = "all-MiniLM-L6-v2/model.onnx"
+tokenizer_path = "all-MiniLM-L6-v2/tokenizer.json"
+config_path = "all-MiniLM-L6-v2/config.json"
+
+# Model parameters
+max_sequence_length = 256
+embedding_dimension = 384
+pooling_mode = "mean"  # Options: mean, cls, max
+
+# Performance settings
+batch_size = 16
+use_gpu = false
+num_threads = 4
+
+# Runtime settings
+onnx_runtime_path = "onnxruntime-win-x64-1.22.0"
+execution_provider = "CPU"  # Options: CPU, CUDA, TensorRT, etc.
+
+# Model groups for different use cases
+[model_groups]
+# General purpose embeddings
+general = ["all-MiniLM-L6-v2"]
+
+# Multilingual embeddings
+multilingual = []
+
+# High-dimensional embeddings
+high_dim = []
+
+# GPU-accelerated models
+gpu_models = []
+
+# Monitoring settings
+[monitoring]
+metrics_enabled = true
+log_inference_times = true
+track_usage = true
+metrics_interval = 60
+
+# Error handling settings
+[error_handling]
+max_retries = 3
+retry_delay_ms = 100
+circuit_breaker_enabled = false
+circuit_breaker_threshold = 10
+circuit_breaker_timeout = 60
+
+# Development settings
+[development]
+debug_logging = false
+validate_outputs = false
+save_intermediates = false

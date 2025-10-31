@@ -1,0 +1,66 @@
+# Embedding Server Configuration
+# Standalone TCP server for fast embedding generation
+
+[network]
+# Server bind address (IP:PORT)
+bind_address = "0.0.0.0:8787"
+
+# Maximum number of concurrent connections
+max_connections = 100
+
+# Connection timeout in seconds
+connection_timeout_secs = 30
+
+# Read timeout in seconds
+read_timeout_secs = 30
+
+# Write timeout in seconds
+write_timeout_secs = 30
+
+# TCP keep-alive interval in seconds
+keep_alive_interval_secs = 60
+
+# Maximum message size in bytes (5MB - smaller for embeddings)
+max_message_size = 5242880
+
+# Buffer size for reading messages (32KB)
+buffer_size = 32768
+
+[performance]
+# Number of worker threads for handling connections
+worker_threads = 4
+
+# Size of the message processing queue
+message_queue_size = 5000
+
+# Maximum concurrent embedding tasks
+max_concurrent_tasks = 50
+
+[embedding]
+# Path to embedding models configuration
+models_config = "embeddingmodels.toml"
+
+# Default model to use
+default_model = "All MiniLM L6 v2"
+
+# Maximum batch size
+max_batch_size = 32
+
+# Request timeout in seconds
+request_timeout_secs = 30
+
+[monitoring]
+# Enable metrics collection
+enable_metrics = true
+
+# Metrics collection interval in seconds
+metrics_interval_secs = 60
+
+# Enable detailed logging
+enable_detailed_logging = true
+
+# Log level (error, warn, info, debug, trace)
+log_level = "info"
+
+# Enable connection statistics
+enable_connection_stats = true

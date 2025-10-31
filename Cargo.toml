@@ -1,0 +1,25 @@
+[package]
+name = "embedding_server"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["onnx"]
+onnx = ["ort/download-binaries"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rmp-serde = "1.1"  # MessagePack for binary serialization
+toml = "0.8"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# ONNX Runtime for embeddings
+ort = { version = "2.0.0-rc.10", default-features = false, features = ["load-dynamic", "download-binaries"], optional = true }
+tokenizers = "0.19"
+ndarray = "0.15"
