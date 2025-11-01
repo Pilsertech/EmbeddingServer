@@ -19,6 +19,11 @@ rmp-serde = "1.1"  # MessagePack for binary serialization
 toml = "0.8"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 
+# HTTP REST API server - ULTRA-FAST with Hyper!
+# Using Hyper directly (not Axum) for 5-10x better performance
+# Hyper is the underlying library that Axum uses, but without routing/middleware overhead
+hyper = { version = "0.14", features = ["full"] }
+
 # ONNX Runtime for embeddings
 ort = { version = "2.0.0-rc.10", default-features = false, features = ["load-dynamic", "download-binaries"], optional = true }
 tokenizers = "0.19"

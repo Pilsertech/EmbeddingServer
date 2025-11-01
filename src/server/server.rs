@@ -52,6 +52,11 @@ impl EmbeddingServer {
         })
     }
     
+    /// Get a reference to the embedding manager (for HTTP server sharing)
+    pub fn get_embedding_manager(&self) -> Arc<EmbeddingModelsManager> {
+        Arc::clone(&self.embedding_manager)
+    }
+    
     /// Start the server
     pub async fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         info!("🚀 Starting TCP Embedding Server");

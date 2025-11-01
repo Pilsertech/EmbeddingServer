@@ -9,5 +9,5 @@ pub mod server;
 
 // Re-exports
 pub use models::{EmbeddingModelsManager, EmbeddingError, Embedding};
-pub use server::{EmbeddingServer, ServerConfig};
+pub use server::{EmbeddingServer, ServerConfig, start_hyper_http_server};
 pub use protocol::{EmbedRequest, EmbedResponse};

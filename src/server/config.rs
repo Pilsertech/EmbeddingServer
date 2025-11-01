@@ -14,6 +14,7 @@ pub struct ServerConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NetworkConfig {
     pub bind_address: String,
+    pub http_bind_address: String,
     pub max_connections: usize,
     pub connection_timeout_secs: u64,
     pub read_timeout_secs: u64,
@@ -60,6 +61,7 @@ impl Default for ServerConfig {
         Self {
             network: NetworkConfig {
                 bind_address: "0.0.0.0:8787".to_string(),
+                http_bind_address: "0.0.0.0:8699".to_string(),
                 max_connections: 100,
                 connection_timeout_secs: 30,
                 read_timeout_secs: 30,

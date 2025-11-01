@@ -13,6 +13,8 @@
 //! - Message ID (16): UUID
 //! - Payload: MessagePack serialized data
 
+pub mod http;
+
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read, Write};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

@@ -2,8 +2,35 @@
 # Standalone TCP server for fast embedding generation
 
 [network]
-# Server bind address (IP:PORT)
+# Server bind address (IP:TCP PORT)
 bind_address = "0.0.0.0:8787"
+
+# HTTP REST API bind address - Port 8699 as required by HelixDB for direct POST
+http_bind_address = "0.0.0.0:8699"
+
+# Default URL: http://localhost:8699/embed
+
+# HelixDB expects local embedding server at:
+
+# Host: localhost
+# Port: 8699
+# Endpoint: /embed
+# Method: POST
+# Request Body:
+
+# {
+ # "text": "your text here",
+#  "chunk_style": "recursive",
+#  "chunk_size": 100
+# }
+
+# Expected Response:
+
+# {
+#   "embedding": [0.1, 0.2, 0.3, ...]  // Array of f64 values
+# }
+
+# To use a different URL: You need to set it via environment variable or programmatically (not in config.hx.json).
 
 # Maximum number of concurrent connections
 max_connections = 100

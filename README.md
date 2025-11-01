@@ -1,12 +1,14 @@
-# 🚀 EmbeddingServer - Quick Start Guide
+# 🚀 EmbeddingServer - Dual-Channel Embedding Server
 
 ## What You Now Have
 
-A **standalone, high-performance TCP embedding server** that:
-- Uses the same OVNT protocol as your main server
-- Serves embeddings over TCP (not HTTP) for maximum speed
-- Can be deployed independently
-- Is used by `helix_mcp_server` for embedding generation
+A **standalone, dual-channel embedding server** that:
+- 🔌 Serves embeddings over **TCP** (OVNT protocol) for maximum speed
+- 🌐 Serves embeddings over **HTTP REST API** (HelixDB compatible on port 8699)
+- ⚡ Uses the same OVNT protocol as your main server for TCP
+- 🎯 Compatible with HelixDB's local embedding requirements
+- 📦 Can be deployed independently
+- 🔗 Used by `helix_mcp_server` for embedding generation
 
 ## Directory Structure
 
@@ -62,15 +64,20 @@ cargo run --release
 
 Expected output:
 ```
-🚀 Standalone TCP Embedding Server
+🚀 Dual-Channel Embedding Server
 📊 Log Level: info
 ===============================
 🚀 Initializing TCP Embedding Server
 ✅ Embedding models loaded successfully
 📡 Server bound to 0.0.0.0:8787
 🆔 Server ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-🚀 Starting TCP Embedding Server
-📡 Listening on 0.0.0.0:8787
+✅ Server created successfully!
+📡 TCP Server:  0.0.0.0:8787
+🌐 HTTP Server: 0.0.0.0:8699
+� HTTP Endpoints:
+   POST http://0.0.0.0:8699/embed   - Generate embeddings
+   GET  http://0.0.0.0:8699/health  - Health check
+🛑 Press Ctrl+C to stop
 ```
 
 ### Step 4: Update helix_mcp_server Config
@@ -113,7 +120,34 @@ cargo run --release
 
 ## Testing
 
-### Test EmbeddingServer Directly
+### Test HTTP REST API (HelixDB Compatible)
+
+The server provides a Python test script:
+
+```powershell
+# Install dependencies
+pip install requests
+
+# Run test suite
+python test_http_embedding_api.py
+```
+
+Or test manually with curl:
+
+```powershell
+# Health check
+curl http://localhost:8699/health
+
+# Generate embedding (HelixDB format)
+curl -X POST http://localhost:8699/embed `
+  -H "Content-Type: application/json" `
+  -d '{\"text\": \"Hello world\", \"chunk_style\": \"recursive\", \"chunk_size\": 100}'
+
+# Server info
+curl http://localhost:8699/
+```
+
+### Test EmbeddingServer via TCP
 
 Create a test client:
 
@@ -165,8 +199,9 @@ async fn test_embedding_client() {
 
 ```toml
 [network]
-bind_address = "0.0.0.0:8787"  # Listen on all interfaces
-max_connections = 100           # Concurrent connections
+bind_address = "0.0.0.0:8787"         # TCP server (OVNT protocol)
+http_bind_address = "0.0.0.0:8699"    # HTTP server (REST API - HelixDB compatible)
+max_connections = 100                  # Concurrent connections
 connection_timeout_secs = 30
 
 [performance]
@@ -201,7 +236,9 @@ num_threads = 4
 
 ## Protocol Details
 
-### Request Format
+### TCP Protocol (OVNT)
+
+**Request Format:**
 ```rust
 EmbedRequest {
     text: String,           // Text to embed
@@ -209,7 +246,7 @@ EmbedRequest {
 }
 ```
 
-### Response Format (3 supported formats)
+**Response Format (3 supported formats):**
 ```rust
 // 1. Direct array (default)
 [0.1, 0.2, ..., 0.384]
@@ -223,8 +260,62 @@ EmbedRequest {
 
 All are automatically handled by the client.
 
+### HTTP Protocol (REST API)
+
+**Endpoints:**
+
+| Method | Path      | Description           |
+|--------|-----------|-----------------------|
+| POST   | /embed    | Generate embeddings   |
+| GET    | /health   | Health check          |
+| GET    | /         | Server information    |
+
+**POST /embed Request (HelixDB Format):**
+```json
+{
+  "text": "Text to embed",
+  "chunk_style": "recursive",
+  "chunk_size": 100,
+  "model": "All MiniLM L6 v2"  // Optional
+}
+```
+
+**POST /embed Response:**
+```json
+{
+  "embedding": [0.1, 0.2, 0.3, ..., 0.384]
+}
+```
+
+**GET /health Response:**
+```json
+{
+  "status": "healthy",
+  "model": "All MiniLM L6 v2",
+  "version": "0.1.0",
+  "embedding_dimension": 384
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Error message",
+  "code": "ERROR_CODE",
+  "details": "Additional details"
+}
+```
+
+**Error Codes:**
+- `EMPTY_TEXT` - Text field is empty
+- `TEXT_TOO_LONG` - Text exceeds 8192 characters
+- `INVALID_REQUEST` - Malformed request
+- `MODEL_NOT_READY` - Model still loading
+- `INTERNAL_ERROR` - Server error
+
 ## Performance
 
+### TCP Channel (OVNT Protocol)
 | Metric | Value |
 |--------|-------|
 | Protocol Overhead | ~0.5ms |
@@ -232,23 +323,41 @@ All are automatically handled by the client.
 | Embedding Generation | 10-50ms (CPU) |
 | **Total** | **11-55ms per request** |
 
-Compare to HTTP: +2-5ms overhead
+### HTTP Channel (REST API)
+| Metric | Value |
+|--------|-------|
+| Protocol Overhead | ~2-5ms |
+| Local Network Latency | 1-5ms |
+| Embedding Generation | 10-50ms (CPU) |
+| **Total** | **13-60ms per request** |
+
+**Recommendation:** Use TCP for internal high-performance needs, HTTP for HelixDB compatibility and external integrations.
 
 ## Deployment Scenarios
 
 ### Development (Same Machine)
 ```
-EmbeddingServer: 127.0.0.1:8787
-helix_mcp_server: connects to 127.0.0.1:8787
+EmbeddingServer:
+  - TCP:  127.0.0.1:8787
+  - HTTP: 127.0.0.1:8699
+
+helix_mcp_server: connects to 127.0.0.1:8787 (TCP)
+HelixDB: connects to http://127.0.0.1:8699 (HTTP)
 ```
 
 ### Production (Separate Machines)
 ```
-EmbeddingServer: 192.168.1.100:8787
-helix_mcp_server: connects to 192.168.1.100:8787
+EmbeddingServer:
+  - TCP:  192.168.1.100:8787
+  - HTTP: 192.168.1.100:8699
+
+helix_mcp_server: connects to 192.168.1.100:8787 (TCP)
+HelixDB: connects to http://192.168.1.100:8699 (HTTP)
 ```
 
-Update firewall to allow TCP port 8787.
+Update firewall to allow:
+- TCP port 8787 (OVNT protocol)
+- TCP port 8699 (HTTP REST API)
 
 ### Docker Deployment
 
@@ -258,7 +367,8 @@ services:
   embedding-server:
     build: ./EmbeddingServer
     ports:
-      - "8787:8787"
+      - "8787:8787"  # TCP (OVNT)
+      - "8699:8699"  # HTTP (REST)
     volumes:
       - ./all-MiniLM-L6-v2:/app/models
       - ./onnxruntime-win-x64-1.22.0:/app/runtime
@@ -267,6 +377,13 @@ services:
     build: ./helix_mcp_server
     environment:
       EMBEDDING_SERVER: "embedding-server:8787"
+    depends_on:
+      - embedding-server
+
+  helixdb:
+    build: ./helixdb
+    environment:
+      EMBEDDING_SERVICE_URL: "http://embedding-server:8699"
     depends_on:
       - embedding-server
 ```
@@ -313,25 +430,45 @@ services:
 4. ✅ **Monitor performance** - Check logs, measure latency
 5. ✅ **Deploy** - Move to production environment
 
-## Benefits Over HTTP Service
+## Channel Comparison
 
-| Feature | HTTP | TCP (OVNT) |
-|---------|------|------------|
-| Protocol Overhead | ~5-10ms | ~1-2ms |
+| Feature | HTTP REST | TCP (OVNT) |
+|---------|-----------|------------|
+| Protocol Overhead | ~2-5ms | ~0.5-1ms |
 | Serialization | JSON | MessagePack (binary) |
-| Connection | HTTP handshake | Direct TCP |
+| Connection | HTTP/1.1 | Direct TCP |
 | Type Safety | Runtime | Compile-time |
-| Consistency | Different | Same as main server |
+| Use Case | HelixDB, external integrations | Internal, high-performance |
+| Port | 8699 | 8787 |
+| Compatibility | Standard HTTP clients | Custom OVNT protocol |
+
+**Both channels run simultaneously** - use the one that fits your needs!
+
+## HelixDB Integration
+
+For HelixDB to use this local embedding server:
+
+1. **Configure HelixDB** with `embedding_model: "local"` in `config.hx.json`
+2. **HelixDB expects** the HTTP server on port 8699 (already configured)
+3. **Endpoint**: `POST http://localhost:8699/embed`
+4. **Request format**: HelixDB automatically sends `text`, `chunk_style`, and `chunk_size`
+5. **Response format**: Server returns `{"embedding": [...]}`
+
+See `LOCAL_EMBEDDING_SETUP.md` for detailed HelixDB integration guide.
 
 ## Support
 
-- **Documentation**: See `EMBEDDING_SEPARATION_PLAN.md`
+- **HTTP API Spec**: See `LOCAL_EMBEDDING_SETUP.md`
 - **TCP Client Guide**: See `helix_mcp_server/TCP_EMBEDDING_CLIENT_GUIDE.md`
+- **Documentation**: See `EMBEDDING_SEPARATION_PLAN.md`
+- **Test Script**: Run `test_http_embedding_api.py`
 - **Issues**: Check logs with `log_level = "debug"`
 
 ---
 
-**Your embedding model is now running as a standalone, high-performance TCP server!** 🎉
-#   E m b e d d i n g S e r v e r  
- #   E m b e d d i n g S e r v e r  
+**Your embedding model is now running as a dual-channel server supporting both TCP and HTTP!** 🎉
+#   E m b e d d i n g S e r v e r 
+ 
+ #   E m b e d d i n g S e r v e r 
+ 
  
