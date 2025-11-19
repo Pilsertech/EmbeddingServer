@@ -106,7 +106,7 @@ pub mod onnx {
 
         async fn initialize(&mut self) -> crate::models::EmbeddingResult<()> {
             // Initialize the ONNX engine
-            let onnx_config = crate::onnx::OnnxConfig::default();
+            let onnx_config = crate::onnx::OnnxConfig::with_runtime_path(&self.config.onnx_runtime_path);
             let engine = crate::onnx::OnnxEmbeddingEngine::new(
                 &self.config.model_path,
                 &self.config.tokenizer_path,

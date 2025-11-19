@@ -38,7 +38,7 @@ use_gpu = false
 num_threads = 4
 
 # Runtime settings
-onnx_runtime_path = "onnxruntime-win-x64-1.22.0"
+onnx_runtime_path = "onnxruntime-linux-x64-1.22.0"
 execution_provider = "CPU"  # Options: CPU, CUDA, TensorRT, etc.
 
 # Model groups for different use cases

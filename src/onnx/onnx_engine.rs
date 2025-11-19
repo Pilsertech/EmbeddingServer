@@ -47,14 +47,49 @@ pub struct OnnxConfig {
 impl Default for OnnxConfig {
     fn default() -> Self {
         // Use absolute path to the ONNX runtime library
+        let (runtime_dir, lib_name) = if cfg!(target_os = "windows") {
+            ("onnxruntime-win-x64-1.22.0", "onnxruntime.dll")
+        } else if cfg!(target_os = "linux") {
+            ("onnxruntime-linux-x64-1.22.0", "libonnxruntime.so")
+        } else {
+            ("onnxruntime-linux-x64-1.22.0", "libonnxruntime.so") // fallback to linux
+        };
+
         let runtime_path = std::env::current_dir()
             .unwrap_or_else(|_| std::path::PathBuf::from("."))
-            .join("onnxruntime-win-x64-1.22.0")
+            .join(runtime_dir)
             .join("lib")
-            .join("onnxruntime.dll");
+            .join(lib_name);
         
         Self {
             library_path: runtime_path.to_string_lossy().to_string(),
+            version: "1.22.0".to_string(),
+            enable_profiling: false,
+            enable_memory_optimization: true,
+            thread_pool_size: 4,
+        }
+    }
+}
+
+impl OnnxConfig {
+    /// Create a new OnnxConfig with a custom runtime path
+    pub fn with_runtime_path(runtime_path: &str) -> Self {
+        let lib_name = if cfg!(target_os = "windows") {
+            "onnxruntime.dll"
+        } else if cfg!(target_os = "linux") {
+            "libonnxruntime.so"
+        } else {
+            "libonnxruntime.so" // fallback
+        };
+
+        let runtime_path_full = std::env::current_dir()
+            .unwrap_or_else(|_| std::path::PathBuf::from("."))
+            .join(runtime_path)
+            .join("lib")
+            .join(lib_name);
+
+        Self {
+            library_path: runtime_path_full.to_string_lossy().to_string(),
             version: "1.22.0".to_string(),
             enable_profiling: false,
             enable_memory_optimization: true,
