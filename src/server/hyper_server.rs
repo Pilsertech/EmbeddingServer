@@ -252,11 +252,13 @@ async fn handle_embed(req: Request<Body>, state: ServerState) -> Response<Body> 
     match embedding_result {
         Ok(embedding) => {
             let serialize_start = std::time::Instant::now();
-            let response = HttpEmbedResponse::new(embedding);
+            // Convert f32 embedding to f64 as required by HelixDB
+            let embedding_f64: Vec<f64> = embedding.into_iter().map(|x| x as f64).collect();
+            let response = HttpEmbedResponse::new(embedding_f64);
             let json_body = serde_json::to_string(&response).unwrap();
             info!("⏱️  JSON serialization took: {:?}", serialize_start.elapsed());
             info!("⏱️  TOTAL request took: {:?}", start_time.elapsed());
-            
+
             Response::builder()
                 .status(StatusCode::OK)
                 .header("content-type", "application/json")

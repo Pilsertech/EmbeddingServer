@@ -60,17 +60,16 @@ impl HttpEmbedRequest {
 }
 
 /// HTTP Embedding Response - HelixDB Format
-/// 
+///
 /// HelixDB expects: {"embedding": [0.1, 0.2, 0.3, ...]}
+/// Note: Uses f64 (double precision) as required by HelixDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpEmbedResponse {
-    /// The embedding vector
-    pub embedding: Vec<f32>,
-}
-
-impl HttpEmbedResponse {
+    /// The embedding vector (f64 precision)
+    pub embedding: Vec<f64>,
+}impl HttpEmbedResponse {
     /// Create a new response
-    pub fn new(embedding: Vec<f32>) -> Self {
+    pub fn new(embedding: Vec<f64>) -> Self {
         Self { embedding }
     }
 }
@@ -214,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_http_embed_response() {
-        let embedding = vec![0.1, 0.2, 0.3];
+        let embedding = vec![0.1f64, 0.2f64, 0.3f64];
         let response = HttpEmbedResponse::new(embedding.clone());
         assert_eq!(response.embedding, embedding);
     }
