@@ -44,21 +44,21 @@ pub struct EmbedRequest {
 #[serde(untagged)]
 pub enum EmbedResponse {
     /// Direct array format: [0.1, 0.2, ...]
-    DirectArray(Vec<f32>),
+    DirectArray(Vec<f64>),
     /// Wrapped format: {"embedding": [...]}
-    Wrapped { embedding: Vec<f32> },
+    Wrapped { embedding: Vec<f64> },
     /// Alternative wrapped: {"vector": [...]}
-    VectorWrapped { vector: Vec<f32> },
+    VectorWrapped { vector: Vec<f64> },
 }
 
 impl EmbedResponse {
     /// Create response from embedding vector
-    pub fn new(embedding: Vec<f32>) -> Self {
+    pub fn new(embedding: Vec<f64>) -> Self {
         EmbedResponse::DirectArray(embedding)
     }
 
     /// Get the embedding vector regardless of format
-    pub fn get_embedding(&self) -> &Vec<f32> {
+    pub fn get_embedding(&self) -> &Vec<f64> {
         match self {
             EmbedResponse::DirectArray(v) => v,
             EmbedResponse::Wrapped { embedding } => embedding,
@@ -97,19 +97,19 @@ impl ProtocolMessage {
     pub async fn write_to_stream(&self, stream: &mut TcpStream) -> io::Result<()> {
         // Magic bytes
         stream.write_all(&MAGIC_BYTES).await?;
-        
+
         // Version
         stream.write_u8(VERSION).await?;
-        
+
         // Message type
         stream.write_u8(MSG_TYPE_DATA).await?;
-        
+
         // Length (payload size)
         stream.write_u32_le(self.payload.len() as u32).await?;
-        
+
         // Sender ID
         stream.write_all(self.sender_id.as_bytes()).await?;
-        
+
         // Target ID (optional)
         if let Some(target) = self.target_id {
             stream.write_u8(1).await?; // Some tag
@@ -117,13 +117,13 @@ impl ProtocolMessage {
         } else {
             stream.write_u8(0).await?; // None tag
         }
-        
+
         // Message ID
         stream.write_all(self.message_id.as_bytes()).await?;
-        
+
         // Payload
         stream.write_all(&self.payload).await?;
-        
+
         stream.flush().await?;
         Ok(())
     }
@@ -139,7 +139,7 @@ impl ProtocolMessage {
                 format!("Invalid magic bytes: {:?}", magic),
             ));
         }
-        
+
         // Read version
         let version = stream.read_u8().await?;
         if version != VERSION {
@@ -148,18 +148,18 @@ impl ProtocolMessage {
                 format!("Unsupported version: {}", version),
             ));
         }
-        
+
         // Read message type
         let _msg_type = stream.read_u8().await?;
-        
+
         // Read length
         let length = stream.read_u32_le().await?;
-        
+
         // Read sender ID
         let mut sender_bytes = [0u8; 16];
         stream.read_exact(&mut sender_bytes).await?;
         let sender_id = Uuid::from_bytes(sender_bytes);
-        
+
         // Read target ID (optional)
         let target_tag = stream.read_u8().await?;
         let target_id = if target_tag == 1 {
@@ -169,16 +169,16 @@ impl ProtocolMessage {
         } else {
             None
         };
-        
+
         // Read message ID
         let mut message_bytes = [0u8; 16];
         stream.read_exact(&mut message_bytes).await?;
         let message_id = Uuid::from_bytes(message_bytes);
-        
+
         // Read payload
         let mut payload = vec![0u8; length as usize];
         stream.read_exact(&mut payload).await?;
-        
+
         Ok(Self {
             sender_id,
             target_id,
@@ -234,17 +234,21 @@ mod tests {
     #[test]
     fn test_embed_response_formats() {
         let embedding = vec![0.1, 0.2, 0.3];
-        
+
         // Test direct array
         let resp1 = EmbedResponse::DirectArray(embedding.clone());
         assert_eq!(resp1.get_embedding(), &embedding);
-        
+
         // Test wrapped
-        let resp2 = EmbedResponse::Wrapped { embedding: embedding.clone() };
+        let resp2 = EmbedResponse::Wrapped {
+            embedding: embedding.clone(),
+        };
         assert_eq!(resp2.get_embedding(), &embedding);
-        
+
         // Test vector wrapped
-        let resp3 = EmbedResponse::VectorWrapped { vector: embedding.clone() };
+        let resp3 = EmbedResponse::VectorWrapped {
+            vector: embedding.clone(),
+        };
         assert_eq!(resp3.get_embedding(), &embedding);
     }
 }
